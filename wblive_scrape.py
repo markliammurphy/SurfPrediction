@@ -11,7 +11,7 @@ import urllib
 import requests
 
 
-def get_data():
+def write_data():
     pass
 
 
@@ -22,8 +22,9 @@ def crawl_archives():
     soup = BeautifulSoup(r.text, "html5lib")
 
     # find the dates specified in arguments
-    for date in soup.find_all("div", class_="postDate"):
-        print(date.text)
+    for article in soup.article:
+        print(article.find_all("postDate").text)
+
 
 
 def main():
