@@ -124,4 +124,3 @@ if __name__ == '__main__':
                         help='Directory for csv to be saved')
     ARGS, _ = parser.parse_known_args()
     main()
-    
