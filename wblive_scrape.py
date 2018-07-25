@@ -14,7 +14,7 @@ from itertools import chain
 from bs4 import BeautifulSoup
 
 
-def get_soup(seconds = False, page = 2):
+def get_soup(seconds=False, page=2):
 
     if seconds is False:
         url = ('http://www.wblivesurf.com/reports/?startdate=' + ARGS.start_date + 
@@ -26,7 +26,7 @@ def get_soup(seconds = False, page = 2):
 
     response = get(url)
     soup = BeautifulSoup(response.text, 'html5lib')
-    return(soup)
+    return soup
 
 
 def scrape_page(soup):
@@ -38,40 +38,35 @@ def scrape_page(soup):
     reports = soup.find_all('article')
     
     for r in reports:
-        date = r.find('div', class_ = 'postDate')
+        date = r.find('div', class_='postDate')
         dates.append(date.text)
 
-        time = r.find('div', class_ = 'time')
-        times.append(time.text[:8])
+        t = r.find('div', class_='time')
+        times.append(t.text[:8])
 
-        star_jar = r.find('div', class_ = 'current')
+        star_jar = r.find('div', class_='current')
         full = len(star_jar.find_all('div'))
-        half = len(star_jar.find_all('div', class_ = 'ratingCell half'))
+        half = len(star_jar.find_all('div', class_='ratingCell half'))
         rating = full - .5 * half
         ratings.append(rating)
 
-    return(dates, times, ratings)
+    return dates, times, ratings
 
 
 def crawl_archives():
 
     def append_data():
-        dates, times, ratings = scrape_page(soup)
-        d.append(dates)
-        t.append(times)
-        r.append(ratings)
-        return(len(dates))
 
+        return len(dates)
 
     def save_data():
-        wblive_ratings = pd.DataFrame({'date': list(chain.from_iterable(d)), 
-                                       'time': list(chain.from_iterable(t)),
-                                       'rating': list(chain.from_iterable(r))})
+        wblive_ratings = pd.DataFrame({'date': d,
+                                       'time': t,
+                                       'rating': r})
         wblive_ratings.to_csv(os.path.join(ARGS.data_dir, 'wblive_ratings.csv'),
-                              index = False, columns = ['date', 'time', 'rating'])
+                              index=False, columns=['date', 'time', 'rating'])
         print('Total run-time: {} seconds'.format(time() - start_time))
         raise SystemExit
-
 
     start_time = time()
 
@@ -80,26 +75,36 @@ def crawl_archives():
     r = []
 
     soup = get_soup()
-    n = append_data()
+    dates, times, ratings = scrape_page(soup)
+    d += dates
+    t += times
+    r += ratings
+
+    n = len(dates)
 
     if n < 16:
+        print("Saving ... fewer than 16 entries on page")
         save_data()
         
-    soup = get_soup(seconds = True)
+    soup = get_soup(seconds=True)
     title = soup.find('title')
 
     if "Page not found" not in title.text:
         page_max = int(title.text.split('/')[1].split()[0])
     else:
         save_data()
-    
+
     append_data()
 
     for page in range(3, page_max + 1):
         if page % 5 == 0:
             print('On page {} of {}'.format(page, page_max))
-        soup = get_soup(seconds = True, page = page)
-        append_data()
+        soup = get_soup(seconds=True, page=page)
+        scrape_page(soup)
+        dates, times, ratings = scrape_page(soup)
+        d += dates
+        t += times
+        r += ratings
 
     save_data()
 
