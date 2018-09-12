@@ -3,7 +3,9 @@ Pull hourly weather data from the Dark Sky API
 Default location is Wrightsville Beach, NC
 
 Run as follows:
-    python3 darkSky.py --lat latitude --long longitude --start_date yyyy-mm-dd --end_date yyy-mm-dd --api_key api-key --data_dir directory
+    python3 darkSky.py --api_key api-key --lat latitude --long longitude --start_date yyyy-mm-dd --end_date yyy-mm-dd --data_dir directory
+
+    Note: api_key is a required argument. Use -h for help.
 '''
 
 import os
@@ -45,32 +47,35 @@ def get_data(api_urls):
 def main():
     urls = gen_urls()
     data = get_data(urls)
-    data.to_csv(os.path.join(ARGS.data_dir, 'darkSky.csv'))
+    data.to_csv(os.path.join(ARGS.data_dir, 'darksky.csv'))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--lat',
+    optional = parser._action_groups.pop() # Edited this line
+    required = parser.add_argument_group('required arguments')
+    optional.add_argument('--lat',
                         type=str,
                         default='34.2085',
                         help='latitude')
-    parser.add_argument('--long',
+    optional.add_argument('--long',
                         type=str,
                         default='-77.7964',
                         help='longitude (locations in western hemisphere should be negative)')
-    parser.add_argument('--start_date',
+    optional.add_argument('--start_date',
                         type=str,
                         default='2018-01-01',
                         help='Start date in form yyyy-mm-dd')
-    parser.add_argument('--end_date',
+    optional.add_argument('--end_date',
                         type=str,
                         default='2018-01-01',
                         help='End date in form yyyy-mm-dd')
-    parser.add_argument('--api_key',
+    required.add_argument('--api_key',
                         type=str,
-                        help='No Default: Sign up for free at https://darksky.net/dev')
-    parser.add_argument('--data_dir',
+                        help='Sign up for free at https://darksky.net/dev')
+    optional.add_argument('--data_dir',
                         type=str,
                         default=os.getcwd(),
                         help='Directory for csv to be saved')
+    parser._action_groups.append(optional)
     ARGS, _ = parser.parse_known_args()
     main()
