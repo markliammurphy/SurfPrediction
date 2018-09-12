@@ -20,7 +20,6 @@ def gen_urls():
     dateRange = pd.date_range(start=ARGS.start_date, end=ARGS.end_date, tz='US/Eastern')
     dateRange.astype(np.int64)
     dates = [day.value // 10 ** 9 for day in dateRange]
-
     urls = []
     for date in dates:
         url = ('https://api.darksky.net/forecast/' + ARGS.api_key + '/' 
