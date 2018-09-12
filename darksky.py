@@ -15,7 +15,7 @@ import pandas as pd
 
 
 def gen_urls():
-    # Generate date range
+   
     dateRange = pd.date_range(start=ARGS.start_date, end=ARGS.end_date, tz='US/Eastern')
     dateRange.astype(np.int64)
     dates = [day.value // 10 ** 9 for day in dateRange]
