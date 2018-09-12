@@ -2,7 +2,7 @@
 Scrape surf reports from wblive, save result as a csv
 
 Run as follows: 
-    python3 wblive_scrape.py --start_date mm/dd/yy --end_date mm/dd/yy --data_dir [directory_path]
+    python3 wblive_scrape.py --start_date yyyy-mm-dd --end_date yyyy-mm-dd --data_dir [directory_path]
 '''
 
 import os
@@ -122,7 +122,7 @@ if __name__ == '__main__':
     parser.add_argument('--end_date',
                         type=str,
                         default='2016-12-31',
-                        help='Start date in form yyyy-mm-dd')
+                        help='End date in form yyyy-mm-dd')
     parser.add_argument('--data_dir',
                         type=str,
                         default=os.getcwd(),
