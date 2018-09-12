@@ -51,31 +51,31 @@ def main():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    optional = parser._action_groups.pop() # Edited this line
+    optional = parser._action_groups.pop()
     required = parser.add_argument_group('required arguments')
     required.add_argument('--api_key',
-                        type=str,
-                        help='Sign up for free at https://darksky.net/dev')
+                          type=str,
+                          help='Sign up for free at https://darksky.net/dev')
     optional.add_argument('--lat',
-                        type=str,
-                        default='34.2085',
-                        help='latitude')
+                          type=str,
+                          default='34.2085',
+                          help='latitude')
     optional.add_argument('--long',
-                        type=str,
-                        default='-77.7964',
-                        help='longitude (locations in western hemisphere should be negative)')
+                          type=str,
+                          default='-77.7964',
+                          help='longitude (locations in western hemisphere should be negative)')
     optional.add_argument('--start_date',
-                        type=str,
-                        default='2018-01-01',
-                        help='Start date in form yyyy-mm-dd')
+                          type=str,
+                          default='2018-01-01',
+                          help='Start date in form yyyy-mm-dd')
     optional.add_argument('--end_date',
-                        type=str,
-                        default='2018-01-01',
-                        help='End date in form yyyy-mm-dd')
+                          type=str,
+                          default='2018-01-01',
+                          help='End date in form yyyy-mm-dd')
     optional.add_argument('--data_dir',
-                        type=str,
-                        default=os.getcwd(),
-                        help='Directory for csv to be saved')
+                          type=str,
+                          default=os.getcwd(),
+                          help='Directory for csv to be saved')
     parser._action_groups.append(optional)
     ARGS, _ = parser.parse_known_args()
     main()
