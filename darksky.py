@@ -5,7 +5,7 @@ Default location is Wrightsville Beach, NC
 Run as follows:
     python3 darkSky.py --api_key api-key --lat latitude --long longitude --start_date yyyy-mm-dd --end_date yyy-mm-dd --data_dir directory
 
-    Note: api_key is a required argument. Use -h for help.
+    Note: api_key is a required argument. Use 'python3 darksky.py -h' for help.
 '''
 
 import os
@@ -17,11 +17,9 @@ import pandas as pd
 
 
 def gen_urls():
-   
     dateRange = pd.date_range(start=ARGS.start_date, end=ARGS.end_date, tz='US/Eastern')
     dateRange.astype(np.int64)
     dates = [day.value // 10 ** 9 for day in dateRange]
-
     urls = []
     for date in dates:
         url = ('https://api.darksky.net/forecast/' + ARGS.api_key + '/' 

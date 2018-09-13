@@ -2,7 +2,6 @@ library(dplyr)
 library(jsonlite)
 library(lubridate)
 
-
 # Data-getting Functions ======================================================
 
 read_NDBC_data <- function(url) {
