@@ -1,6 +1,8 @@
 library(dplyr)
+library(purrr)
 library(jsonlite)
 library(lubridate)
+
 
 # Data-getting Functions ======================================================
 
@@ -15,11 +17,7 @@ get_COOPS_data <- function(start_date, end_date) {
   
   gen_url <- function(x) {
     front_half <- "https://tidesandcurrents.noaa.gov/api/datagetter?"
-    back_half <- 
-      paste0(
-        "&station=8658163&product=water_level", 
-        "&datum=mllw&units=english&time_zone=lst&format=json"
-      )
+    back_half <- "&station=8658163&product=water_level&datum=mllw&units=english&time_zone=lst&format=json"
     last_day <- x
     month(last_day) <- month(last_day) + 1
     last_day <- last_day - 1
@@ -45,97 +43,104 @@ get_COOPS_data <- function(start_date, end_date) {
 
 # Reading the data ============================================================
 
-# Swell Data
-station41110_2016_raw <-
+# Waves
+station41110_raw <-
   read_NDBC_data(
-    paste0(
-      "https://www.ndbc.noaa.gov/view_text_file.php?filename=",
-      "41110h2016.txt.gz&dir=data/historical/stdmet/"
-    )
+      "https://www.ndbc.noaa.gov/view_text_file.php?filename=41110h2008.txt.gz&dir=data/historical/stdmet/"
   )
 
-
-# Wind Data (Johnny Mercer's Pier)
-jmpn7_2016_raw <- 
+# Wind (Johnny Mercer's Pier)
+jmpn7_raw <- 
   read_NDBC_data(
-    paste0(
-      "https://www.ndbc.noaa.gov/view_text_file.php?filename=",
-      "jmpn7h2016.txt.gz&dir=data/historical/stdmet/"
-    )
+      "https://www.ndbc.noaa.gov/view_text_file.php?filename=jmpn7h2008.txt.gz&dir=data/historical/stdmet/"
   )
+
+for (year in 2009:2017) {
+  next_year_41110_url = sprintf(
+    "https://www.ndbc.noaa.gov/view_text_file.php?filename=41110h%d.txt.gz&dir=data/historical/stdmet/", 
+    year
+  )
+  next_year_41110_data = read_NDBC_data(next_year_41110_url)
+  station41110_raw = rbind(station41110_raw, next_year_41110_data)
+  
+  next_year_jmpn7_url = sprintf(
+    "http://www.ndbc.noaa.gov/view_text_file.php?filename=jmpn7h%d.txt.gz&dir=data/historical/stdmet/", 
+    year
+  )
+  next_year_jmpn7_data = read_NDBC_data(next_year_jmpn7_url)
+  jmpn7_raw = rbind(jmpn7_raw, next_year_jmpn7_data)
+}
 
 # Tide/water-level Data
-wb_water_2016_raw <- get_COOPS_data("2016-01-01", "2016-12-31")
+wb_water_raw <- get_COOPS_data("2008-01-01", "2017-12-31")
 
 
 # Tidying ====================================================================
 
 # NDBC ------------------------------------------------------------------------
 
-is_useful <- function(col) {
-  length(unique(col)) > 1 | !(unique(col)[1] %in% c(99, 999, 9999))
-} 
+is_useful <- function(col) length(unique(col)) > 1 
+jmpn7 <- select_if(jmpn7_raw, is_useful)
+station41110 <- select_if(station41110_raw, is_useful)
 
-jmpn7_2016 <- select_if(jmpn7_2016_raw, is_useful)
-station41110_2016 <- select_if(station41110_2016_raw, is_useful)
+find_replace_na <- function(col) {
+  ifelse(col == max(col) & (col %in% c(99, 999, 9999)) , NA, col)
+}
 
-find_9_replace_na <- function(col) ifelse(col %in% c(99, 999, 9999), NA, col)
-jmpn7_2016 <- data.frame(lapply(jmpn7_2016, find_9_replace_na))
-station41110_2016 <- data.frame(lapply(station41110_2016, find_9_replace_na))
+jmpn7 <- map_dfc(jmpn7, find_replace_na)
+station41110 <- map_dfc(station41110, find_replace_na)
 
-names(jmpn7_2016)[1:5] <- c("year", "month", "day", "hour", "min")
-names(station41110_2016)[1:5] <- c("year", "month", "day", "hour", "min")
+# jmpn7[rowSums(is.na(jmpn7)) > 0, ]
 
-jmpn7_2016 <- 
-  jmpn7_2016 %>% 
+names(jmpn7)[1:5] <- c("year", "month", "day", "hour", "min")
+names(station41110)[1:5] <- c("year", "month", "day", "hour", "min")
+
+jmpn7 <- 
+  jmpn7 %>% 
   mutate(datetime = ymd_hm(paste(year, month, day, hour, min))) %>%
   with_tz(tz = "America/New_York") 
-station41110_2016 <- 
-  station41110_2016 %>% 
+station41110 <- 
+  station41110 %>% 
   mutate(datetime = ymd_hm(paste(year, month, day, hour, min))) %>%
   with_tz(tz = "America/New_York")
 
-# Drop/Re-order columns
-jmpn7_2016 <- 
-  jmpn7_2016 %>% 
+# Drop old time columns/Re-order 
+jmpn7 <- 
+  jmpn7 %>% 
   select(datetime, WDIR:WTMP)
-station41110_2016 <- 
-  station41110_2016 %>%
+station41110 <- 
+  station41110 %>%
   select(datetime, WVHT:WTMP)
-
-# Rounding up one minute
-station41110_2016[station41110_2016$date > ymd("16-08-31"), ] <- 
-  station41110_2016 %>% 
-  filter(date > ymd("16-08-31")) %>% 
-  mutate(date = round_date(date, "30 mins"))
 
 
 # CO-OPS ----------------------------------------------------------------------
 
-wb_water_2016 <- select(wb_water_2016_raw, t, v) 
-names(wb_water_2016) <- c("datetime", "TIDE")
-wb_water_2016$datetime <- 
+wb_water <- select(wb_water_raw, t, v) 
+names(wb_water) <- c("datetime", "TIDE")
+wb_water$datetime <- 
   as.POSIXct(
-    wb_water_2016$datetime, 
+    wb_water$datetime, 
     format  = "%Y-%m-%d %H:%M",
     tz = "America/New_York"
   )
 
 
-# Combining the data ==========================================================
-
-waves_wind_2016 <- inner_join(station41110_2016, jmpn7_2016, by = "datetime")
-
-# distinguish inshore/offshore water temps.
-names(waves_wind_2016)[c(6, 12)] <- c("WTMP_in", "WTMP_off") 
-
-waves_wind_tide_2016 <- inner_join(waves_wind_2016, wb_water_2016, by = "datetime")
-
-
-# Write out csv ===============================================================
+# Write out csv's ===============================================================
 
 write.csv(
-  waves_wind_tide_2016, 
-  file = file.path(getwd(), "data", "wb_buoys_2016.csv"), 
+  station41110, 
+  file = file.path(getwd(), "data", "station_41110.csv"), 
+  row.names = F
+)
+
+write.csv(
+  jmpn7, 
+  file = file.path(getwd(), "data", "jmpn7.csv"), 
+  row.names = F
+)
+
+write.csv(
+  wb_water, 
+  file = file.path(getwd(), "data", "tide.csv"), 
   row.names = F
 )
