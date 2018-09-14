@@ -41,6 +41,7 @@ def get_data(api_urls):
     out.set_index('time', inplace = True)
     out.index = out.index.tz_localize('GMT')
     out.index = out.index.tz_convert('America/New_York')
+    out.index = out.index.tz_localize(None)
     return(out)
 
 
