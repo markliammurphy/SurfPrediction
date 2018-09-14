@@ -37,8 +37,10 @@ def get_data(api_urls):
         hourly = pd.DataFrame(raw['hourly']['data'])
         dfs.append(hourly)
     out = pd.concat(dfs, sort=False)
-    out['time'] = pd.to_datetime(out['time'] - 60 * 60 * 5, unit='s')
+    out['time'] = pd.to_datetime(out['time'], unit='s')
     out.set_index('time', inplace = True)
+    out.index = out.index.tz_localize('GMT')
+    out.index = out.index.tz_convert('America/New_York')
     return(out)
 
 
