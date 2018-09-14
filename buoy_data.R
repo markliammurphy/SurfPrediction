@@ -129,7 +129,7 @@ wb_water$datetime <-
 
 write.csv(
   station41110, 
-  file = file.path(getwd(), "data", "station_41110.csv"), 
+  file = file.path(getwd(), "data", "station41110.csv"), 
   row.names = F
 )
 
