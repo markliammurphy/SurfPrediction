@@ -20,7 +20,7 @@ By default, this script will scrape all 2016 WB Live ratings and output them as 
 This script generates a series of calls to [Dark Sky's weather API](https://darksky.net/dev) and outputs the returned data as a csv. Run as follows:
 
 ```
-$ python3 darkSky.py --api_key api-key --lat latitude --long longitude --start_date yyyy-mm-dd --end_date yyy-mm-dd --data_dir directory
+$ python3 darkSky.py --api_key api-key --lat latitude --long longitude --start_date yyyy-mm-dd --end_date yyyy-mm-dd --data_dir directory
 ```
 
 Note that `--api_key` is a required argument. Sign up is free on [Dark Sky's website](https://darksky.net/dev) and includes 1,000 free calls per day (i.e. 1,000 days worth of hourly data = 24,000 rows per day). 
